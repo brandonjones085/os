@@ -38,7 +38,7 @@ done < $one
 for i in $(seq 1 $row)
 do
 #cats the file, cuts out each column, pastes the new row
-cat  $1 | cut -f$i $1 | paste -s 
+cat  $1 | cut -f$i $1 | paste -s
 done
 
 }
@@ -47,6 +47,7 @@ done
 #MEAN FUNCTION
 mean()
 {
+    
 #variable declaration
 row=0
 col=0
@@ -85,6 +86,9 @@ tot=$(($row*$col))
 mean=$(($sum / $tot))
 
 echo $mean
+
+rm -f $testfile
+rm -f $temp 
 
 }
 
