@@ -27,6 +27,10 @@ transpose()
 row=0
 i=1
 
+if test -f $1 -a -f $1
+then 
+
+
 #This is mostly to just get the number of rows
 #by counting the first row
 while IFS= read -r myLine || [ -n "$myLine" ]
@@ -41,6 +45,10 @@ do
 #cats the file, cuts out each column, pastes the new row
 cat  $1 | cut -f$i $1 | paste -s
 done
+
+else
+    echo  "ERROR: File not readable" 1>&2
+fi 
 
 }
 
@@ -82,14 +90,15 @@ do
     for n in $nums
     do 
     sum=$(expr $sum + $n )
-    mean=$(($sum / $col))
+
+    #proper rounding formula
+    mean=$(((sum + (col/2)*( (sum>0)*2-1 )) / col))
+
     done
+
+    #replaces new line with tab moves to final 
     echo $mean | tr "\n" "\t" >> $final 
-    #sum=$(expr $sum + $num )
-
-    #mean=$(($sum / $col))
-
-    #echo $mean >> final 
+    
 done <$tempFile
 
 
@@ -158,7 +167,6 @@ then
     echo "2ERROR: Matricies need to have the same number col and rows" 1>&2
     exit 1
 fi 
-
 
 
 
@@ -251,9 +259,6 @@ fi
 
 }
 
-#checking for valid command 
-
-
 
 
 #______________________Calling dims______________________
@@ -300,11 +305,11 @@ then
      exit 1 
     fi 
 
-    if [ ! -f $2 ]
-    then 
-        echo "Error: No such file" 1>&2
-        exit 1
-    fi 
+    # if [ ! -f $2 ]
+    # then 
+    #     echo "Error: No such file" 1>&2
+    #     exit 1
+    # fi 
 
     if [ $# -eq 1 ]
     then
