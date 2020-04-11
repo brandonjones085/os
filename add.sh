@@ -9,6 +9,8 @@ i=0
 temp="temp"
 sumTotals="sumTotals"
 
+
+
 #reads in first matrix and gets the number of rows and col
 #puts the matrix into a single line, removing all spaces into the temp
 while IFS= read -r myLine || [ -n "$myLine" ]
@@ -30,6 +32,22 @@ do
 
 done <$2
 
+#this block checks both matricies are the same size
+if [ $row != $row2 ]
+then 
+    echo "ERROR: Matricies need to have the same number col and rows" 1>&2
+    exit 1
+fi  
+
+if [ $col != $col2 ]
+then 
+    echo "ERROR: Matricies need to have the same number col and rows" 1>&2
+    exit 1
+fi 
+
+
+
+
 #loops through the values, cuts the first value and total + 1 for the sum
 #this continues for all the values 
 #places sums in sumTotal
@@ -44,26 +62,25 @@ do
     
 done <$temp
 
-
-
-#cut -f 3 $sumTotals | tr "\n" "\t" > "temp65"
-
-#readarray -t a < $sumTotals
-
 IFS=$'\r\n' GLOBIGNORE='*' command eval  'sumArray=($(cat $sumTotals))'
-
 
 for r in $(seq 1 $col )
 do 
 for c in $(seq 1 $row )
-do 
-echo -n ${sumArray[(($row*$r+$c-$(expr $col - 1 ) ))]}$'\t'
+do
+#echo -n ${sumArray[(($row*$r+$c-7))]}$'\t'
+echo -n ${sumArray[(($row*$r+$c-$(expr $row + 1 )))]}$'\t'  
+#echo -n ${sumArray[(($row*$r+$c-$(expr $col - $(expr $row - 1 ) )  ))]}$'\t'
 done
 echo 
 done
 
-#echo "${sumArray[*]}"
+#echo $(expr $col + $col - 1 )
 
+#echo $(expr $row + 1 ) 
+
+
+#echo ${sumArray[*]}
 
 rm -f "sumTotals"
 rm -f "temp"
