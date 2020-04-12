@@ -1,12 +1,20 @@
 #!/bin/bash
 
 
+#################################################################
+#Name: DIMS 
+#Purpose: Return dimensions of a matrix
+#Input: A single matrix
+#Output: The number of rows and columns
+#Description: Takes in a matrix and returns the number of col and rows
+##################################################################
 #DIMS FUNCTION
 dims()
 {
 col=0
 row=0
 
+#reads in file
 while IFS= read -r myLine || [ -n "$myLine" ]
 do  
     row=$( head -n 1 $1 | wc -w )  #counts the number of rows
@@ -15,13 +23,18 @@ do
 done < $one
 
 #returns values
-
 echo $col $row
 
 
 }
 
-#TRANSPOSE FUNCTION
+#################################################################
+#Name: Transpose
+#Purpose: Return transpose of a matrix
+#Input: A single matrix
+#Output: The transpose 
+#Description: Takes in a matrix and returns the transpose of the matrix
+##################################################################
 transpose()
 {
 row=0
@@ -39,7 +52,7 @@ do
 
 done < $one
 
-
+#loops through each 
 for i in $(seq 1 $row)
 do
 #cats the file, cuts out each column, pastes the new row
@@ -47,6 +60,7 @@ cat  $1 | cut -f$i $1 | paste -s
 done
 
 else
+#   Error with the file
     echo  "ERROR: File not readable" 1>&2
     exit 1 
 fi 
@@ -54,10 +68,19 @@ fi
 }
 
 
-#MEAN FUNCTION
+#################################################################
+#Name: Mean 
+#Purpose: Return mean for each row 
+#Input: A single matrix
+#Output: The mean for each row in a single line
+#Description: Takes in a matrix and returns the mean for each row
+#             in a single line
+##################################################################
+
 mean()
 {
 
+#variables
 row=0
 col=0
 tot=0
@@ -66,12 +89,15 @@ num=0
 mean=0
 i=1
 
+#files
 temp="temp"
 tempFile="tempFile"
 final="final"
 reversed="reversed"
 revRemoved="revRemoved"
 
+
+#reads in the file and counts num of rows and cols
 while IFS= read -r myLine || [ -n "$myLine" ]
 do  
     row=$( head -n 1 $1 | wc -w )   #number of rows
@@ -79,12 +105,14 @@ do
     echo -n $myLine |  tr -d " " >> $temp
 done <$1
 
+#removes each col and stdout into tempFile ina single row
 for i in $(seq 1 $row)
 do
 cat  $temp | cut -f$i $1 | paste -s >> $tempFile
 
 done
 
+#Reads tempFile and finds sum for each row
 while IFS= read -r nums || [ -n "$nums" ]
 do  
     sum=0
@@ -109,8 +137,10 @@ rev $final > $reversed
 cat $reversed | cut -c 2- > $revRemoved
 rev $revRemoved > $final 
 
+#final output
 cat $final 
 
+#removes all temp files
 rm -f $temp
 rm -f $final
 rm -f $revRemoved
@@ -119,7 +149,15 @@ rm -f $tempFile
 
 }
 
-
+#################################################################
+#Name: Add
+#Purpose: Adds two matricies
+#Input: Two matricies
+#Output: The sum of both matricies
+#Description: Takes two matricies and finds the sum
+#             The matricies are validated according to addition rules
+#             A matrix is returned with the sums
+##################################################################
 add()
 {
 
@@ -141,11 +179,11 @@ sumTotals="sumTotals"
 one="one"
 two="two"
 
+#Zero arguments returns error
 if [ $# -eq 0 ]
 then 
     echo "ERROR: Need at least one matrix" 1>&2
     exit 1
-
 fi
 
 #reads in first matrix and gets the number of rows and col
@@ -194,7 +232,7 @@ fi
 
 
 #loops through the values
-#places sums in sumTotal
+#places sums in sumArray 
 while read mat1 && read mat2 <&3
 do 
    
@@ -206,8 +244,7 @@ do
 done <$one 3<$two
 
 
-
-# #This is used to format array back into matrix
+#This is used to format array back into matrix
 while [[ $i -le $(expr $tot - 1) ]]   
 do 
 if [[ $count -ne $row ]]
@@ -223,7 +260,7 @@ else
 fi 
 done
 
-
+#Removes all temp files
 rm -f "sumTotals"
 rm -f "temp1"
 rm -f "temp2"
@@ -231,7 +268,15 @@ rm -f "one"
 rm -f "two"
 }
 
-
+#################################################################
+#Name: Multiply 
+#Purpose: Multiplies two matricies
+#Input: Two matricies
+#Output: The product of both matricies
+#Description: Takes two matricies and finds the products
+#             The matricies are validated according to multiplication rules
+#             A matrix is returned with the products
+##################################################################
 multiply()
 {
 
@@ -262,41 +307,43 @@ do
 done <$1
 
 #reads in first matrix and gets the number of rows and col
-#puts the matrix into a single line, removing all spaces into the temp2
-while IFS=$'\t' read -r -a n || [ -n "$n" ]
+#puts file into temp2
+while IFS= read -r -a n || [ -n "$n" ]
 do  
     row2=$( head -n 1 $2 | wc -w )   #number of rows
     col2=$(expr $col2 + 1 )           #counts the number of cols
-    echo -e $n >> $temp2
+    echo "$n" >> $temp2
 done <$2
 
 #this runs if multiplication is possible 
 if [ $row1 -eq $col2 ]
 then
 
-
+#loops through ind for col of first file
 for i in $(seq 1 $(expr $col1 ) )
-#for ((i=1; i<=col1; i++))
     do 
+    #each line moved into tempfile
     cat $temp | tr " " "\t" | head -$i | tail -1 > tempfile
 
+    #second file rows looped through
     for j  in $(seq 1 $(expr $row2 ) )
 
     do 
         count=1 
         sum=0
-        cut -f $j $2  > tempfile2
+        cut -f $j $temp2  > tempfile2
 
-        while IFS= read -r c || [ -n "$c" ]
+        #loops through tempfile2
+        #multiplies each and used that for the sum 
+        while IFS='\t' read -r l || [ -n "$l" ]
         do 
-            r=$( cut -f $count tempfile )
-            mul=$((r*c))
+            mul=$(($(cut -f $count tempfile )*l))
             sum=$(expr $sum + $mul )
             count=$(expr $count + 1 )
 
         done < $tempfile2
 
-
+        #outputs products in new matrix
         if [ $j -lt $row2 ]
         then 
             echo -e -n "$sum\t"
@@ -309,12 +356,13 @@ for i in $(seq 1 $(expr $col1 ) )
 done 
         
 else
+    #the two matricies are not able to be multiplied
     echo "Error: The two matricies are not able to be multiplied"
     exit 1 
 fi 
 
 
-
+#Removes all temp files
 rm -f $temp
 rm -f $temp2
 rm -f $tempfile
@@ -324,69 +372,75 @@ rm -f $tempfile2
 }
 
 
-
 #______________________Calling dims______________________
 if [ $1 = 'dims' ]
 then
+    #greater than two arguments
     if (( $# > 2 ))
     then 
      echo "ERROR: Only one matrix for DIMS function" 1>&2
      exit 1 
     fi 
 
+    #zero arguments
     if [ $# -eq 0 ]
     then 
     echo "ERROR: Need at least one matrix" 1>&2
     exit 1
     fi 
 
+    #function runs
+    #used for cat piping
     if [ $# -eq 1 ]
     then
     one=tempfile
     cat > $one 
     fi 
 
+    #error with the file
     if [ ! -f $2 ]
     then
         echo "Error: No such file" 1>&2
         exit 1  
     fi 
     
+    #function runs 
+    #second argument saved at one
     if [ $# -gt 1 ]
     then 
     one=$2
     fi 
 
+    #calling function
     dims $one
 
 #____________________CALLING TRANSPOSE___________________
-
 elif [ $1 = 'transpose' ]
 then
+
+    #greater than two arguments
      if (( $# > 2 ))
     then 
      echo "Error: Only one matrix for TRANSPOSE function" 1>&2
      exit 1 
     fi 
 
-    # if [ ! -f $2 ]
-    # then 
-    #     echo "Error: No such file" 1>&2
-    #     exit 1
-    # fi 
-
+    #function runs
+    #used for cat piping
     if [ $# -eq 1 ]
     then
     one=tempfile
     cat > $one 
     fi 
 
+    #function runs
+    #saves second argument as one
     if [ $# -gt 1 ]
     then
     one=$2
     fi 
 
-   
+   #calling function 
     transpose $one
 
 
@@ -395,89 +449,105 @@ then
 
 elif [ $1 = 'mean' ]
 then
-        if (( $# > 2 ))
+
+    #greater than two arguments
+    if (( $# > 2 ))
     then 
      echo "ERROR: Only one matrix for MEAN function" 1>&2
      exit 1 
     fi 
 
+    #zero arguments
     if [ $# -eq 0 ]
     then 
     echo "ERROR: Need at least one matrix" 1>&2
     exit 1
     fi 
 
+    #function runs
+    #used for cat piping
     if [ $# -eq 1 ]
     then
     one=tempfile
     cat > $one 
     fi 
 
+    #error with the file
     if [ ! -f $2 ]
     then
         echo "Error: No such file" 1>&2
         exit 1  
     fi 
     
+    #function runs
+    #saves second argument as one
     if [ $# -gt 1 ]
     then 
     one=$2
     fi 
 
+    #calling function 
     mean $one
    
-
-
+#________________________CALLING ADD_________________________
 elif [ $1 = 'add' ]
 then
-        if (( $# > 3 ))
+    #greater than three arguments
+    if (( $# > 3 ))
     then 
      echo "ERROR: Only two matrices for ADD function" 1>&2
      exit 1 
     fi 
 
-
+    #error with the file
     if [ ! -f $2 ] || [ ! -f $3 ]
     then
         echo "Error: No such file" 1>&2
         exit 1  
     fi 
     
+    #function rungs
+    #saves two arguments as one and two
     if [ $# -gt 2 ]
     then 
     one=$2
     two=$3
     fi 
 
+    #calling add
     add $one $two 
 
 
-
+#_________________________CALLING MULTIPLY_________________________
 elif [ $1 = 'multiply' ]
 then
-
-        if (( $# > 3 ))
+    #greater than three arguments
+    if (( $# > 3 ))
     then 
      echo "ERROR: Only two matrices for MULTIPLY function" 1>&2
      exit 1 
     fi 
 
+    #zero arguments
     if [ $# -eq 0 ]
     then 
     echo "ERROR: Need at least two matricies" 1>&2
     exit 1
     fi 
 
-     if [ $# -gt 2 ]
+    #function runs
+    #saves two arguments as one and two
+    if [ $# -gt 2 ]
     then 
     one=$2
     two=$3
     fi 
 
+    #calling multiply 
     multiply $one $two 
 
-
 else
+    #error for bad command
     echo "ERROR: Badcommand" 1>&2
     exit 1
 
