@@ -20,6 +20,17 @@ struct Room
     struct Room* outboundCon[6]; 
 };
 
+char *fileNames[7] =
+{
+    "First_File", 
+    "Second_File", 
+    "Third_File", 
+    "Fourth_File", 
+    "Fifth_File", 
+    "Sixth_File", 
+    "Seventh_File"
+};
+
 
 
 char newestDirName[256];
@@ -31,10 +42,11 @@ void open(char* dir);
 void getRooms( char* dir); 
 void roomArrayInit(); 
 void readFile(char* file, int i); 
-void printArray(); 
+int printArray(char* r); 
 int FindRoomByName(char* name);
 int getRoom(char* r); 
 void connectRoom(struct Room* x, struct Room* y);
+void makeConnections(char* file, int i); 
 
 
 void open(char* dir)
@@ -66,6 +78,8 @@ void open(char* dir)
                     time = newestDirTime;
                     strcpy(newestDirName, fileInDir->d_name);
                     int i = 0; 
+                    int j = 0; 
+                     int q=0; 
                     if((dirToCheck=opendir(newestDirName)) != NULL)
                     {
                         while ((fileInDir = readdir(dirToCheck)) != NULL)
@@ -74,13 +88,27 @@ void open(char* dir)
                             {
             
                                 rooms[i]->fileName=fileInDir->d_name; 
-                            
+                                //printf("%s\n",rooms[i]->fileName); 
+                               int m;
+                                for (m = 0; m < 7; m++)
+                                {
                                 readFile(fileInDir->d_name, i); 
+                                }
+                                
+                                //printf("FILES %s\n", fileInDir->d_name); 
+                                //int p = getRoom(fileInDir->d_name); 
+                           
+     
                                 i++; 
                             }
                           
+
+               
                         }
+      
+                        
                     }
+                 
                     
                 }
             }
@@ -91,6 +119,8 @@ void open(char* dir)
 
 
 }
+
+
 
 
 void readFile(char* file, int i)
@@ -107,13 +137,14 @@ void readFile(char* file, int i)
     FILE* fileToOpen; 
 
      // printf("FILENAMES: %s\n", rooms[i].fileName);
+
     fileToOpen = fopen(file, "r"); 
     if(fileToOpen == NULL)
     {
         printf("ERROR\n"); 
     }
     else
-    {
+    {  
         while(fgets(buf1, sizeof(buf1), fileToOpen) != NULL)
         {
 
@@ -121,7 +152,16 @@ void readFile(char* file, int i)
             strtok(buf1, ":");
            // printf("LINE: %s\n", buf1); 
             strcpy(buf2, strtok(NULL, "")); 
-    
+            if (buf1[strlen(buf1)-1] == '\n')
+            {
+                buf1[strlen(buf1)-1]='\0';
+            }
+            
+            if (buf2[strlen(buf2)-1] == '\n')
+            {
+                buf2[strlen(buf2)-1]='\0';
+            }
+
             if (strstr(buf1, "Room Type") != NULL)
             {
                if (strstr(buf2, "End"))
@@ -146,65 +186,48 @@ void readFile(char* file, int i)
             {
                 if (strstr(buf2, "Living Room"))
                {
-                   rooms[i]->name = "Living Room"; 
+                   rooms[i]->name = "Living Room\n"; 
                }
                else if (strstr(buf2, "Master Bedroom"))
                {
-                   rooms[i]->name= "Master Bedroom"; 
+                   rooms[i]->name= "Master Bedroom\n"; 
                }
                else if (strstr(buf2, "Office"))
                {
-                   rooms[i]->name = "Office"; 
+                   rooms[i]->name = "Office\n"; 
                }
                 else  if (strstr(buf2, "Kitchen"))
                {
-                   rooms[i]->name = "Kitchen"; 
+                   rooms[i]->name = "Kitchen\n"; 
                }
                else if (strstr(buf2, "Bathroom 1"))
                {
-                   rooms[i]->name = "Bathroom 1"; 
+                   rooms[i]->name = "Bathroom 1\n"; 
                }
                else if (strstr(buf2, "Guest Bedroom"))
                {
-                   rooms[i]->name = "Guest Bedroom"; 
+                   rooms[i]->name = "Guest Bedroom\n"; 
                }
                 else if (strstr(buf2, "Bathroom 2"))
                {
-                   rooms[i]->name = "Bathroom 2"; 
+                   rooms[i]->name = "Bathroom 2\n"; 
                }
                else if (strstr(buf2, "Front Porch"))
                {
-                   rooms[i]->name= "Front Porch"; 
+                   rooms[i]->name= "Front Porch\n"; 
                }
                else if (strstr(buf2, "Garage"))
                {
-                   rooms[i]->name = "Garage"; 
+                   rooms[i]->name = "Garage\n"; 
                }
                else
                {
-                   rooms[i]->name = "Basement";
+                   rooms[i]->name = "Basement\n";
                }
-               
             }
 
             
         }    
-
-        while(fgets(buf1, sizeof(buf1), fileToOpen) != NULL)
-        {
-             strtok(buf1, ":");
-          
-            strcpy(buf2, strtok(NULL, "")); 
-            if(strstr(buf1, "Connecti") != NULL)
-            {
-                //find index
-                 printf("LINE: %s\n", buf1); 
-                int ind = getRoom(buf2); 
-
-                //add connection
-                connectRoom(rooms[i], rooms[ind]); 
-            }
-        }
         
     }
     fclose(fileToOpen);
@@ -214,41 +237,31 @@ void readFile(char* file, int i)
 
 void connectRoom(struct Room* x, struct Room* y)
 {
-    int num = x->numOutbound; //gets num
+     	int num = x->numOutbound; //gets num
 
-    x->outboundCon[num] = y; //creates link
-    x->numOutbound += 1; //increments int by one    
+        x->outboundCon[num] = y; //creates link
+        x->numOutbound += 1; //increments int by one
+
 }
+
 
 
 int getRoom(char* r)
 {
-    	int i=0;
-
-	//search through the rooms array to find a room that matches the given name
-	for (i = 0; i<7;i++)
-	{
-		if(strcmp(rooms[i]->name, r) == 0)
-		{
-			return i;
-		}
-		i++;
-	}
-}
-
-void printArray()
-{
-    int i, j; 
-     for (i = 0; i < 7; i++)
-     {
-       // printf("FILENAME %s", rooms[i]->fileName);
-        printf("ROOM %s\n", rooms[i]->name);
-        for (j = 0; j < rooms[i]->numOutbound; j++)
-        {
-            printf("CONNECTION: %s", rooms[i]->outboundCon[j]);
+    int i=0; 
+    int num=100; 
+    char* p;
+    for (i = 0; i < 7; i++)
+   {  
+      p=strstr(r, rooms[i]->name);
+        if  (p)
+        { 
+            num = i; 
         }
     }
+    return num; 
 }
+
 
 
 void roomArrayInit()
@@ -262,19 +275,98 @@ void roomArrayInit()
 			rooms[i]->outboundCon[j] = NULL;
 		}
 		rooms[i]->numOutbound = 0;
+        rooms[i]->name='\0';
 
 	}
 }
 
 
+void makeConnections(char* file, int index)
+{
+    char buf1[256]; 
+    char buf2[256]; 
+    char buf3[20];
+    DIR* dirToCheck; // Holds the directory we're starting in
+    struct dirent *fileInDir; // Holds the current subdir of the starting dir
+    struct stat *dirAttributes = malloc(sizeof(struct stat)); // Holds information we've gained about subdir
+    
+    FILE* fileToOpen; 
+    int i; 
+    int n = 0; 
+
+    fileToOpen = fopen(file, "r"); 
+   // printf("FILE: %s\n", rooms[i]->fileName); 
+    if(fileToOpen == NULL)
+    {
+        printf("ERROR"); 
+    }
+    else
+    {
+        //printf("SUCCESS"); 
+
+         while(fgets(buf1, sizeof buf1, fileToOpen) != NULL)
+         {
+
+            memset(buf2, '\0', 256);
+            strtok(buf1, ":");
+            strcpy(buf2, strtok(NULL, "")); 
+
+            if(buf1[strlen(buf1) -1] == '\n')
+            {
+                buf1[strlen(buf1)-1] = '\0';
+            }
+
+         
+            buf2[strlen(buf2)-1] = '\n';
+            
+            strcpy(buf3, buf2);
+             if (strstr(buf1, "Connect") != NULL)
+             {
+                // printf("SIZE %d", sizeof(buf2)); 
+                // printf("BUF2 %s\n", buf2); 
+
+                int ind = getRoom(buf2);
+                // printf("BUF: %s");  
+                //printf("ind: %d\n", ind);
+                
+               connectRoom(rooms[index], rooms[ind]); 
+                // memset(buf2, '\0', 256); 
+         
+                // printf("I: %s", rooms[i]->name);
+                // printf("CONNEC %s", buf2); 
+            }
+        }
+    
+    }
+    
+}
+
 
 int main()
 {
     char dir[50];
-
+   
     roomArrayInit(); 
     open(dir); 
-    printArray();
+    char p[10];
+    memset(p, '\0', 10);
+    strcpy(p, "Office\n"); 
+   int i, j, n; 
+    for (i = 0; i < 7; i++)
+    {
+    //   printf("FILE %s ", fileNames[i]); 
+    //   printf("I: %d\n", i); 
+      makeConnections(fileNames[i], i); 
+    }
+
+    for (j = 0; j < 7; j++)
+    {
+        printf("ROOM %s\n", rooms[j]->name); 
+        for (n = 0; n < rooms[j]->numOutbound; n++)
+        {
+            printf("CONNECT %s\n", rooms[j]->outboundCon[n]->name);
+        }
+    }
 
 
    return 0;  
