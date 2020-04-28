@@ -51,17 +51,17 @@ void makeConnections(char* file, int i);
 
 void open(char* dir)
 {
-    time_t newestDirTime = -1; // Modified timestamp of newest subdir examined
-    time_t time = 0; 
+    
+    int newestDirTime=-1; 
     char targetDirPrefix[32] = "jonewill.rooms."; // Prefix we're looking for
    
 
     char line[256]; 
-    memset(newestDirName, '\0', sizeof(newestDirName));
+    
 
     DIR* dirToCheck; // Holds the directory we're starting in
     struct dirent *fileInDir; // Holds the current subdir of the starting dir
-    struct stat *dirAttributes = malloc(sizeof(struct stat)); // Holds information we've gained about subdir
+    struct stat dirAttributes;
 
     dirToCheck = opendir("."); // Open up the directory this program was run in
 
@@ -71,12 +71,23 @@ void open(char* dir)
         {
             if (strstr(fileInDir->d_name, targetDirPrefix) != NULL)
             {
-                stat(fileInDir->d_name, dirAttributes); 
-                newestDirTime = dirAttributes->st_mtime;
-                if(newestDirTime > time)
+                stat(fileInDir->d_name, &dirAttributes); 
+               
+                if((int)dirAttributes.st_mtime > newestDirTime)
                 {
-                    time = newestDirTime;
+                    newestDirTime = (int)dirAttributes.st_mtime;
+                   // memset(newestDirName, '\0', sizeof(newestDirName)); 
                     strcpy(newestDirName, fileInDir->d_name);
+                   
+
+                    
+                }
+            }
+        }
+    }
+
+
+
                     int i = 0; 
                     int j = 0; 
                      int q=0; 
@@ -88,7 +99,7 @@ void open(char* dir)
                             {
             
                                 rooms[i]->fileName=fileInDir->d_name; 
-                                //printf("%s\n",rooms[i]->fileName); 
+                            
                                int m;
                                 for (m = 0; m < 7; m++)
                                 {
@@ -101,21 +112,13 @@ void open(char* dir)
      
                                 i++; 
                             }
-                          
 
-               
+
                         }
-      
-                        
                     }
-                 
-                    
-                }
-            }
-        }
-    }
 
-  closedir(dirToCheck); // Close the directory we opened
+
+
 
 
 }
@@ -345,13 +348,14 @@ void makeConnections(char* file, int index)
 int main()
 {
     char dir[50];
-   
+    memset(newestDirName, '\0', sizeof(newestDirName));
     roomArrayInit(); 
     open(dir); 
     char p[10];
     memset(p, '\0', 10);
     strcpy(p, "Office\n"); 
    int i, j, n; 
+    printf("NEWEST DIR %s\n", newestDirName); 
     for (i = 0; i < 7; i++)
     {
     //   printf("FILE %s ", fileNames[i]); 
