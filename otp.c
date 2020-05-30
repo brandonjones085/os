@@ -22,11 +22,21 @@ int main(int argc, char *argv[])
 	char type; 
 	char sendInfo[128000];
     
-	if (argc < 6) { fprintf(stderr,"USAGE: %s (post/get) user plaintext key port\n", argv[0]); exit(0); } // Check usage & args
-
+	
 	// Set up the server address struct
 	memset((char*)&serverAddress, '\0', sizeof(serverAddress)); // Clear out the address struct
 	
+
+	
+   //user argv[2]; 
+	//key argv[4]
+	//otp post brandon plaintext key port
+
+
+
+	if (strcmp(argv[1],"post") == 0)///is a post
+	{
+
 	portNumber = atoi(argv[5]); // Get the port number, convert to an integer from a string
 
 
@@ -38,11 +48,9 @@ int main(int argc, char *argv[])
 	{
 		//printf("Connected on port %d\n", portNumber); 
 	}
-	
-   //user argv[2]; 
-	//key argv[4]
-	if (strcmp(argv[1],"get"))///is a post.. It's opposite
-	{
+
+		if (argc < 6) { fprintf(stderr,"USAGE: %s post user plaintext key port\n", argv[0]); exit(0); } // Check usage & args
+
 		memset(buffer, 0, 128000); 
 		strcpy(sendInfo, "post "); 
 		strcat(sendInfo, "NAME:"); 
@@ -63,10 +71,6 @@ int main(int argc, char *argv[])
 		if (connect(socketFD, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) // Connect socket to address
 			error("CLIENT: ERROR connecting");
 
-
-		
-
-
 		file = open(argv[3], O_RDONLY); //opens text file
 
 		if(file < 0)
@@ -77,7 +81,7 @@ int main(int argc, char *argv[])
 
 		
 		text = read(file, buf4, 128000); //reads file stores in text
-
+		//printf("Sending \"%s\"\n", buf4); 
 
 		close(file); 
 
@@ -99,9 +103,9 @@ int main(int argc, char *argv[])
 			exit(1); 
 		}
 
-	int test; 
+
 	int info = send(socketFD, sendInfo, sizeof(sendInfo), 0);
-	int recieved = (socketFD, sendInfo, sizeof(sendInfo) - 1, 0); 
+	
 	
 
 	memset(buf3, 0, sizeof(buf3)); // Clear out the buffer again for reuse
@@ -113,9 +117,9 @@ int main(int argc, char *argv[])
 
 
 	// Send message to server
-	memset(buffer, '\0', sizeof(buffer)); // Clear out the buffer array
-	charsWritten = write(socketFD, buffer, text-1); // Write to the server
 
+	charsWritten = write(socketFD, buf4, text); // Write to the server
+	//printf("Sending \"%s\"\n", buf4); 
 	// if (charsWritten < 0) error("CLIENT: ERROR writing to socket");
 	// if (charsWritten < strlen(buffer)) printf("CLIENT: WARNING: Not all data written to socket!\n");
 
@@ -127,7 +131,7 @@ int main(int argc, char *argv[])
 	if (charsRead < 0) error("CLIENT: ERROR reading from socket");
 	//printf("CLIENT: I received this from the server: \"%s\"\n", buffer);
 
-	charsWritten = write(socketFD, buf2, len -1 ); //sends to socket
+	charsWritten = write(socketFD, buf2, len ); //sends to socket
 	memset(buf3, 0, sizeof(buf3)); 
 	int charsRec = read(socketFD, buf3, 1); 
 
@@ -135,10 +139,10 @@ int main(int argc, char *argv[])
 
 	do 
 	{
-		charsRead = read(socketFD, buffer, text -1); 
+		charsRead = read(socketFD, buffer, text); 
 	}while( charsRead > 0); 
 
-	for (i = 0; i < text -1; i++)
+	for (i = 0; i < text; i++)
 	{
 		printf("%c", buffer[i]); 
 	}
@@ -149,9 +153,28 @@ int main(int argc, char *argv[])
 	exit(0); 
 		
 	}
+
+
+
 	//otp get user key port
-	else if(strcmp(argv[1], "post"))///is a get, opposite
+	
+	if (strcmp(argv[1],"get") == 0)///is a get
 	{
+		//printf("GET"); 
+		portNumber = atoi(argv[4]); // Get the port number, convert to an integer from a string
+
+
+		if(portNumber < 0)
+		{
+			printf("Error with port %d\n", portNumber); 
+		}
+		else
+		{
+			//printf("Connected on port %d\n", portNumber); 
+		}
+	// 	printf("GET"); 
+		if (argc < 5) { fprintf(stderr,"USAGE: %s get user key port\n", argv[0]); exit(0); } // Check usage & args
+	
 		memset(buffer, 0, 128000); 
 		strcpy(sendInfo, "get "); 
 		strcat(sendInfo, "NAME:"); 
@@ -172,12 +195,6 @@ int main(int argc, char *argv[])
 		if (connect(socketFD, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) // Connect socket to address
 			error("CLIENT: ERROR connecting");
 
-
-		
-
-
-
-
 		key = open(argv[3], O_RDONLY); //opens key
 
 		if(key < 0)
@@ -187,7 +204,7 @@ int main(int argc, char *argv[])
 		}
 
 		len = read(key, buf2, 128000);
-
+		
 		if(key < 0)
 		{
 			printf("Error opening key\n"); 
@@ -197,22 +214,33 @@ int main(int argc, char *argv[])
 		close(key); 
 
 		int info = send(socketFD, sendInfo, sizeof(sendInfo), 0);
-		int recieved = (socketFD, sendInfo, sizeof(sendInfo) - 1, 0); 
+	
 	
 
 		memset(buf3, 0, sizeof(buf3)); // Clear out the buffer again for reuse
-		int firstCharsRead = read(socketFD, buf3, 1); // Read data from the socket, leaving \0 at end
+		int charsRead = read(socketFD, buf3, 1); // Read data from the socket, leaving \0 at end
 	
 	
-		if (firstCharsRead < 0) error("CLIENT: ERROR reading from socket");
+		if (charsRead < 0) error("CLIENT: ERROR reading from socket");
 
-		charsWritten = write(socketFD, buf2, len -1 ); //sends to socket
+		charsWritten = write(socketFD, buf2, len-1); //sends key to socket
 		memset(buf3, 0, sizeof(buf3)); 
-		int charsRec = read(socketFD, buf3, 1); 
+		int charsRec = read(socketFD, buf3, 1); //response
 
-		close(socketFD); // Close the socket
+		memset(buffer, 0, 128000); 
 
-		exit(0); 
+		do
+		{
+			charsRead = read(socketFD, buffer, len-1); //decripted text
+		} while (charsRead > 0);
+		
+		for(i = 0; i < len -1; i++)
+		{
+			printf("%c", buffer[i]); 
+		}
+		printf("\n"); 
+		close(socketFD);
+
 	}
 
 	return 0;

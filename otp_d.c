@@ -19,12 +19,13 @@ int main(int argc, char *argv[])
 	char dir[50]; 
 	int numCiphers = 0; 
 	int index = 1; 
-	int listenSocketFD, establishedConnectionFD, portNumber, charsRead, pid, keylen, i, numChar, message, messageSent; 
+	int listenSocketFD, establishedConnectionFD, portNumber, charsRead, pid, key, i, numChar, message, messageSent; 
 	socklen_t sizeOfClientInfo;
 	char buffer[128000];
 	char buf2[128000]; 
 	char buf3[128000]; 
 	char buf4[128000]; 
+	char name[256]; 
 	char* userBuf; 
 	char* line; 
 	struct sockaddr_in serverAddress, clientAddress;
@@ -97,7 +98,8 @@ int main(int argc, char *argv[])
 	//printf("RECEIVED \"%s\"\n", buffer); 
 
 
-	
+	strtok(buffer, ":"); 
+	strcpy(name, strtok(NULL, "")); 
 
 
 	pid = fork(); 
@@ -114,14 +116,18 @@ int main(int argc, char *argv[])
 
 	if (strstr(buffer, "post"))
 	{
-		printf("POST");
+
+
+	//printf("POST"); 
+	//printf("NAME %s\n", name); 
 
 	memset(buffer, 0, 128000);
 	memset(buf2, 0, 128000); 
 	memset(buf4, 0, 128000); 
 
-	charsRead = read(establishedConnectionFD, buf4, 128000); 
-	
+	charsRead = read(establishedConnectionFD, buf4, 128000); //receives text
+	printf("PLAINTEXT: \"%s\"\n", buf4);
+
 	messageSent = write(establishedConnectionFD, "!", 1); //back to client
 
 
@@ -129,9 +135,9 @@ int main(int argc, char *argv[])
 	//messageSent = write(establishedConnectionFD, "!", 1); //back to client
 
 	
-	keylen = read(establishedConnectionFD, buf2, 128000);
+	key = read(establishedConnectionFD, buf2, 128000);//receives key
 
-	if (keylen < 0)
+	if (key < 0)
 	{
 		printf("Error with key on server\n"); 
 		exit(2); 
@@ -140,7 +146,7 @@ int main(int argc, char *argv[])
 
 	// printf("KEY %d\n", keylen); 
 	// printf("chars %d\n", charsRead); 
-	if (keylen < charsRead) //checks for same length
+	if (key < charsRead) //checks for same length
 	{
 		
 		printf("Error: Key and text do not match\n"); 
@@ -149,16 +155,16 @@ int main(int argc, char *argv[])
 
 	for (i = 0; i < charsRead; i++)
 	{
-		if (buffer[i] == 32)
+		if (buf4[i] == 32)
 		{
-			buffer[i]=64; 
+			buf4[i]=64; 
 		}
 		if(buf2[i] == 32)
 		{
 			buf2[i] = 64; 
 		}
 
-		int message = (int) buffer[i]; 
+		int message = (int) buf4[i]; 
 		int key = (int) buf2[i]; 
 
 		message = message -64; 
@@ -173,18 +179,19 @@ int main(int argc, char *argv[])
 
 		if (buf3[i] == 64)
 		{
-			buf3[i] == 32; 
+			buf3[i] = 32; 
 		}
 
 	}
 
 	
 	struct dirent *fileInDir; 
-	char file[100]; 
+	char file[350]; 
 	char filePath[256]; 
-	
+
 	chdir("."); 
-	strcat(file, "ciphertext1"); 
+	strcat(file, name); 
+
 	
 	FILE* fileD = fopen(file, "w");  
 
@@ -192,7 +199,7 @@ int main(int argc, char *argv[])
 	fprintf(fileD, "\n"); 
 
 
-	char *res = realpath("ciphertext1", buf2); 
+	char *res = realpath(file, buf2); 
 
 
 	//sends file path back to client
@@ -218,8 +225,82 @@ int main(int argc, char *argv[])
 	}
 	else 
 	{
-		printf("GET IS HERE"); 
+		//printf("GET"); 
+
+	memset(buffer, 0, 128000);
+	memset(buf2, 0, 128000); 
+	memset(buf3, 0, 128000); 
+	memset(buf4, 0, 128000); 
+
+	//printf("NAME %s\n", name); 
+
+	int file = open(name, O_RDONLY); 
+
+	if (file < 0)
+	{
+		printf("Error: File %s not found\n", name); 
 	}
+
+	
+	int text = read(file, buf2, 128000); 
+	close(file); 
+
+
+
+	charsRead = read(establishedConnectionFD, buf4, 128000); //key
+	//printf("SERVER: I received this from the client: \"%s\"\n", buf4);
+	messageSent = write(establishedConnectionFD, "!", 1); //back to client
+
+
+	if (charsRead < 0) error("ERROR writing to socket");
+	//messageSent = write(establishedConnectionFD, "!", 1); //back to client
+
+	//int key = read(establishedConnectionFD, buf2, 128000);
+
+	for (i = 0; i < text; i++)
+	{
+		if (buf2[i] == 32)
+		{
+			buf2[i]=64; 
+		}
+		if(buf4[i] == 32)
+		{
+			buf4[i] = 64; 
+		}
+
+		int message = (int) buf2[i]; 
+		int key = (int) buf4[i]; 
+
+		message = message -64; 
+		key = key - 64; 
+
+
+		int dec = message - key; 
+
+		if (dec < 0)
+		{
+			dec = dec + 27; 
+		}
+
+		dec = dec + 64; 
+
+		buf3[i] = (char) dec + 0; 
+
+		if(buf3[i] == 64)
+		{
+			buf3[i] = 32; 
+		}
+
+	}
+
+	messageSent = write(establishedConnectionFD, buf3, text-1); 
+	printf("SENT \"%s\"\n", buf3);
+
+	close(listenSocketFD);
+	close(establishedConnectionFD); 
+	exit(0); 
+
+	 }
 	
 
 	}
